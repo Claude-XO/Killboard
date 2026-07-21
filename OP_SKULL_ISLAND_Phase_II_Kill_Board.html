@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OP SKULL ISLAND — Phase II Kill Board</title>
+<style>
+  :root{
+    --bg:#1B2027; --bg-deep:#10141A; --panel:#262D36; --panel-alt:#2F3843;
+    --head:#0C1014; --ink:#E9ECEE; --muted:#97A1AB; --line:#3A434E;
+    --red:#B2352E; --red-hi:#C0392B; --amber:#C8991F; --green:#2E9E54;
+    --green-dk:#247A41; --steel:#78ABC9; --class:#1E6B3A;
+    --serif:Arial, Helvetica, sans-serif;
+    --sans:Arial, Helvetica, sans-serif;
+    --mono:Arial, Helvetica, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{transition:none!important;animation:none!important}}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;padding:44px 0 60px}
+  .classbar{position:fixed;left:0;right:0;background:var(--class);color:#fff;text-align:center;
+    font-size:12px;font-weight:700;letter-spacing:.08em;padding:6px 8px;z-index:50}
+  .classbar.top{top:0}.classbar.bot{bottom:0}
+  .wrap{max-width:1220px;margin:0 auto;padding:22px 22px 30px}
+
+  /* header */
+  header{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+  .titleblock h1{font-family:var(--serif);font-size:34px;font-weight:700;letter-spacing:.01em}
+  .titleblock .sub{color:var(--steel);font-size:14px;margin-top:2px}
+  .phase-select{display:inline-block;background:var(--red);color:#fff;font-weight:700;font-size:12px;
+    letter-spacing:.12em;padding:5px 26px 5px 10px;border-radius:4px;margin-bottom:8px;border:none;
+    cursor:pointer;font-family:var(--sans);-webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M1 3l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/></svg>");
+    background-repeat:no-repeat;background-position:right 9px center}
+  .phase-select option{background:var(--panel);color:var(--ink);font-weight:600;letter-spacing:0}
+  .editable{cursor:text;border-radius:4px;padding:1px 5px;margin:-1px -5px;outline:none;
+    transition:background-color .12s ease,box-shadow .12s ease}
+  .editable:hover{background:rgba(120,171,201,.10);box-shadow:inset 0 0 0 1px var(--line)}
+  .editable:focus{background:var(--bg-deep);box-shadow:inset 0 0 0 1px var(--steel)}
+  .desc.editable{display:inline-block;min-width:60px}
+  .hdr-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end}
+  .btn{background:var(--panel-alt);color:var(--ink);border:1px solid var(--line);border-radius:6px;
+    padding:8px 14px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer}
+  .btn:hover{border-color:var(--steel)}
+  .btn:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+  .btn.danger{border-color:var(--red)}
+  .savestate{font-size:12px;color:var(--muted);min-width:86px;text-align:right}
+
+  /* roll-up dashboard */
+  .rollup{background:var(--bg-deep);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:24px}
+  .rollup-top{display:flex;flex-wrap:wrap;gap:22px;align-items:center;margin-bottom:14px}
+  .overall-num{font-family:var(--mono);font-size:56px;font-weight:700;line-height:1}
+  .overall-label{font-size:12px;letter-spacing:.1em;color:var(--muted);margin-top:4px}
+  .assessment{font-family:var(--serif);font-size:20px;font-weight:700;padding:8px 16px;border-radius:6px;color:#fff}
+  .gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .gauge{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .gauge .g-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .gauge .g-pri{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .gauge .g-name{font-weight:700;font-size:13px}
+  .gauge .g-pct{font-family:var(--mono);font-size:20px;font-weight:700}
+  .bar{height:10px;background:var(--head);border-radius:5px;overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:5px;transition:width .35s ease,background-color .35s ease}
+  .gauge .g-chip{margin-top:7px;font-size:10.5px;font-weight:700;letter-spacing:.06em;
+    display:inline-block;padding:2px 8px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+
+  /* sections */
+  section.cat{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:18px;overflow:hidden}
+  .cat-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+    background:var(--head);padding:12px 16px}
+  .cat-head .left{display:flex;gap:12px;align-items:center}
+  .pri-badge{background:var(--red);color:#fff;font-family:var(--mono);font-weight:700;font-size:13px;
+    width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+  .addrow{width:34px;height:34px;border-radius:50%;border:1px dashed var(--steel);background:transparent;
+    color:var(--steel);font-size:20px;font-weight:700;cursor:pointer;line-height:1;flex:none}
+  .addrow:hover{background:var(--panel-alt);border-style:solid}
+  .cat-head h2{font-family:var(--serif);font-size:19px;font-weight:700}
+  .cat-head .desc{font-size:12px;color:var(--muted)}
+  .cat-pct{font-family:var(--mono);font-size:17px;font-weight:700;padding:4px 12px;border-radius:5px;color:#fff}
+
+  table{width:100%;border-collapse:collapse}
+  th{background:var(--head);font-size:11px;letter-spacing:.08em;color:var(--muted);text-align:center;
+    padding:8px 6px;border-bottom:1px solid var(--line);font-weight:700}
+  th:first-child,th:nth-child(2){text-align:left;padding-left:16px}
+  th .c-conf{color:var(--red-hi)} th .c-prob{color:var(--amber)} th .c-rem{color:var(--green)} th .c-ob{color:var(--steel)}
+  td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center;font-size:14px}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:var(--panel-alt)}
+  td.unit,td.sys{text-align:left;padding-left:16px}
+  td.unit{font-weight:600;white-space:nowrap}
+  td.sys{color:var(--muted);font-size:13px}
+  td.num{font-family:var(--mono);font-size:15px}
+  td.ob{font-family:var(--mono);font-size:15px;color:var(--steel)}
+  .tbr-flag{font-size:10px;font-weight:700;color:var(--amber);border:1px solid var(--amber);
+    border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+
+  /* steppers + inputs */
+  .step{display:inline-flex;align-items:center;gap:6px}
+  .step button{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--bg-deep);
+    color:var(--ink);font-size:16px;font-weight:700;cursor:pointer;line-height:1}
+  .step button:hover{border-color:var(--steel)}
+  .step .val{font-family:var(--mono);font-size:16px;font-weight:700;min-width:26px;display:inline-block}
+  .step.conf .val{color:var(--red-hi)} .step.prob .val{color:var(--amber)}
+  input.start,input.obval{width:58px;background:var(--bg-deep);border:1px solid var(--line);border-radius:6px;
+    color:var(--ink);font-family:var(--mono);font-size:15px;font-weight:700;text-align:center;padding:4px}
+  input.start.tbr{border-color:var(--amber)}
+  input.start.mismatch{border-color:var(--steel)}
+  input.txt{background:var(--bg-deep);border:1px solid var(--line);border-radius:6px;color:var(--ink);
+    font-family:var(--sans);font-size:13px;padding:5px 8px;width:100%}
+  td .pill{display:inline-block;min-width:64px;padding:4px 8px;border-radius:5px;font-family:var(--mono);
+    font-weight:700;font-size:13.5px;color:#fff}
+  .pg{background:var(--green-dk)} .pa{background:var(--amber)} .pr{background:var(--red)} .pn{background:var(--panel-alt);color:var(--muted)}
+  .delrow{width:24px;height:24px;border-radius:5px;border:1px solid var(--line);background:transparent;
+    color:var(--muted);font-size:13px;cursor:pointer;line-height:1}
+  .delrow:hover{border-color:var(--red);color:var(--red-hi)}
+
+  .foot-note{font-size:12px;color:var(--muted);font-style:italic;margin:6px 0 0 2px}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 22px;font-size:12.5px;color:var(--muted)}
+  .legend b{color:var(--ink)}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  textarea.sitrep{width:100%;height:150px;background:var(--bg-deep);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;font-family:var(--mono);font-size:12.5px;padding:12px;margin-top:10px;display:none}
+  @media(max-width:820px){
+    .titleblock h1{font-size:26px}
+    td.sys{display:none}
+    th:nth-child(2){display:none}
+  }
+
+  /* confirm modal (replaces native confirm(), which sandboxed iframes block) */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(6,9,12,.72);
+    z-index:100;align-items:center;justify-content:center;padding:20px}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    max-width:440px;width:100%;padding:22px 22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .modal-msg{font-size:15px;line-height:1.5;color:var(--ink);margin-bottom:18px}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+  .modal-actions .btn{padding:9px 18px}
+</style>
+</head>
+<body>
+<div class="classbar top">UNCLASSIFIED // EXERCISE USE ONLY</div>
+<div class="classbar bot">UNCLASSIFIED // EXERCISE USE ONLY</div>
+
+<div class="wrap">
+  <header>
+    <div class="titleblock">
+      <select class="phase-select" id="phaseSelect" aria-label="Operation phase">
+        <option>Phase I</option>
+        <option>Phase II</option>
+        <option>Phase III</option>
+        <option>Phase IV</option>
+      </select>
+      <h1>S2 Kill Board — <span class="editable" contenteditable="true" spellcheck="false" data-edit="op">OP SKULL ISLAND</span></h1>
+      <div class="sub editable" contenteditable="true" spellcheck="false" data-edit="subtitle">1 AMPHIB BN / 843 AMPHIB BDE (Olvana)  &bull;  56 IBCT (LI) &bull; 3-133 FA BN  &bull;  EA WARLORD</div>
+    </div>
+    <div class="hdr-actions">
+      <span class="savestate" id="savestate"></span>
+      <button class="btn" id="sitrepBtn">Copy SITREP</button>
+      <button class="btn" id="exportBtn">Export</button>
+      <button class="btn" id="importBtn">Import</button>
+      <button class="btn danger" id="resetBtn">Reset board</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+    </div>
+  </header>
+
+  <div class="rollup" id="rollup">
+    <div class="rollup-top">
+      <div>
+        <div class="overall-num" id="overallPct">100%</div>
+        <div class="overall-label">ASSESSED ENEMY COMBAT POWER</div>
+      </div>
+      <div class="assessment" id="assessment">COMBAT EFFECTIVE</div>
+      <div style="flex:1;min-width:220px;font-size:12.5px;color:var(--muted)">
+        Weighted across all tracked systems (CONF kills only), computed from the
+        <b style="color:var(--ink)">START</b> column — the S2's confirmed count.
+        <b style="color:var(--steel)">OB PROJ</b> is the doctrinal baseline for comparison.
+        Secondary figure in each gauge shows the assessment <b style="color:var(--ink)">if PROB kills confirm</b>.
+      </div>
+    </div>
+    <div class="gauges" id="gauges"></div>
+  </div>
+
+  <div class="legend">
+    <span><b style="color:var(--steel)">OB PROJ</b> — projected qty per order of battle (reference only)</span>
+    <span><b>START</b> — confirmed fielded qty (editable; drives all math; steel border = differs from OB)</span>
+    <span><b style="color:var(--red-hi)">CONF</b> — confirmed destroyed (2-source)</span>
+    <span><b style="color:var(--amber)">PROB</b> — probable / firepower kill</span>
+    <span><b style="color:var(--green)">REM</b> = START − CONF</span>
+    <span><span class="dot" style="background:var(--green-dk)"></span>&ge;70% <span class="dot" style="background:var(--amber)"></span>30–69% <span class="dot" style="background:var(--red)"></span>&lt;30%</span>
+  </div>
+
+  <div id="sections"></div>
+  <textarea class="sitrep" id="sitrepBox" readonly aria-label="SITREP summary text"></textarea>
+  <p class="foot-note">Use the + on any section to add a newly identified unit, and the × at the end of any row to remove it (Reset restores the original order of battle).</p>
+</div>
+
+<div class="modal-overlay" id="confirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="confirmMsg">
+  <div class="modal">
+    <p class="modal-msg" id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="confirmNo">Cancel</button>
+      <button type="button" class="btn danger" id="confirmYes">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ---------------- data model (Phase II Defense HPTL order) ----------------
+// ob: doctrinal / order-of-battle projected qty. null = TBR (unknown in OB).
+const CATS = [
+  { id:"ada",  pri:1, name:"ADA",         desc:"SEAD for 1-149 AVN — enables friendly air",
+    rows:[
+      { id:"t625", unit:"ADA SEC",  sys:"Type 625E SPAAG / FN-16 SAM", ob:3    },
+      { id:"zsam", unit:"SAM SEC",  sys:"ZBD-05 (SAM variant)",        ob:null },
+    ]},
+  { id:"fs",   pri:2, name:"FIRES",       desc:"Deny massed indirect on the BPs",
+    rows:[
+      { id:"pll",  unit:"MTR CO",    sys:"PLL-05 120mm SP How-Mortar", ob:6    },
+      { id:"plz",  unit:"ATTD ARTY", sys:"PLZ-07B 122mm SPH",          ob:null },
+    ]},
+  { id:"c2",   pri:3, name:"C2 / R&S",    desc:"Blind and mute the battalion",
+    rows:[
+      { id:"acv",  unit:"BN CP", sys:"ZBD-05 ACV (Cmd)",        ob:2 },
+      { id:"bus",  unit:"BN CP", sys:"Dongfeng 2102 C2 Bus",    ob:1 },
+      { id:"apc",  unit:"SIG",   sys:"ZBD-05 APC",              ob:3 },
+      { id:"arc",  unit:"RECON", sys:"ZBD-05 ARC (Armd Recon)", ob:1 },
+    ]},
+  { id:"mnvr", pri:4, name:"MANEUVER",    desc:"Attrit mech in EA WARLORD",
+    rows:[
+      { id:"co1", unit:"1 CO",           sys:"ZBD-05 IFV (30mm / HJ-73C)", ob:10 },
+      { id:"co2", unit:"2 CO",           sys:"ZBD-05 IFV (30mm / HJ-73C)", ob:10 },
+      { id:"co3", unit:"3 CO",           sys:"ZBD-05 IFV (30mm / HJ-73C)", ob:10 },
+      { id:"co4", unit:"4 CO",           sys:"ZBD-05 IFV (30mm / HJ-73C)", ob:10 },
+      { id:"ilp", unit:"INIT LDG PARTY", sys:"ZBD-05 IFV (30mm)",          ob:2  },
+      { id:"trk", unit:"CO TRAINS",      sys:"EQ2050 LTV (12.7mm)",        ob:16 },
+      { id:"wpn", unit:"WPN CO",         sys:"EQ2050 LTV (12.7mm)",        ob:8  },
+    ]},
+  { id:"sust", pri:5, name:"SUSTAINMENT", desc:"Collapse tempo — fuel and FARP",
+    rows:[
+      { id:"ural", unit:"FUEL", sys:"URAL-375 Fueler", ob:null },
+      { id:"farp", unit:"FARP", sys:"FARP site(s)",    ob:null },
+    ]},
+];
+const OB_INDEX = {};
+CATS.forEach(c => c.rows.forEach(r => OB_INDEX[r.id] = r.ob));
+
+const KEY = "skull-island-phase2-board-v2";
+const OLD_KEY = "skull-island-phase2-board-v1";
+// state.rows[id] = {start,conf,prob}; state.custom[catId] = [{id,unit,sys,ob}]
+let state = null;
+let memOnly = false;
+let customSeq = 1;
+
+const DEFAULT_META = {
+  op: "OP SKULL ISLAND",
+  subtitle: "1 AMPHIB BN / 843 AMPHIB BDE (Olvana)  \u2022  56 IBCT (LI) \u2022 3-133 FA BN  \u2022  EA WARLORD",
+  phase: "Phase II",
+};
+function defaults(){
+  const rows = {};
+  CATS.forEach(c => c.rows.forEach(r => { rows[r.id] = { start:(r.ob==null?0:r.ob), conf:0, prob:0 }; }));
+  const custom = {};
+  CATS.forEach(c => custom[c.id] = []);
+  const meta = { op:DEFAULT_META.op, subtitle:DEFAULT_META.subtitle, phase:DEFAULT_META.phase, desc:{} };
+  CATS.forEach(c => meta.desc[c.id] = c.desc);   // editable category descriptions, seeded from defaults
+  return { rows, custom, deleted:[], meta };     // deleted = ids of removed pre-built rows
+}
+
+// ---------------- persistence (offline-first: localStorage -> in-app storage -> memory) ----------------
+const Store = (function(){
+  let local = false;
+  try{
+    const p = "__kb_probe__";
+    window.localStorage.setItem(p, "1");
+    window.localStorage.removeItem(p);
+    local = true;                                   // normal browser / offline file
+  }catch(e){ local = false; }                       // sandboxed preview blocks localStorage
+  const artifact = !!(typeof window !== "undefined" && window.storage && typeof window.storage.get === "function");
+  const mem = {};
+  return {
+    mode: local ? "local" : (artifact ? "artifact" : "memory"),
+    async get(key){
+      if(local){ const v = window.localStorage.getItem(key); return v==null ? null : { value:v }; }
+      if(artifact){ try{ return await window.storage.get(key); }catch(e){ return null; } }
+      return (key in mem) ? { value: mem[key] } : null;
+    },
+    async set(key, value){
+      if(local){ try{ window.localStorage.setItem(key, value); return true; }catch(e){ return false; } }
+      if(artifact){ try{ await window.storage.set(key, value); return true; }catch(e){} }
+      mem[key] = value; return true;
+    }
+  };
+})();
+
+// merge a parsed board object into the current `state` (call after state = defaults())
+function mergeSaved(saved){
+  if(!saved || typeof saved !== "object") return false;
+  if(saved.rows) Object.keys(state.rows).forEach(k=>{ if(saved.rows[k]) state.rows[k] = {
+    start:clamp(saved.rows[k].start,0,999), conf:clamp(saved.rows[k].conf,0,999), prob:clamp(saved.rows[k].prob,0,999) }; });
+  if(Array.isArray(saved.deleted))
+    state.deleted = saved.deleted.filter(id => Object.prototype.hasOwnProperty.call(OB_INDEX, id));
+  if(saved.meta){
+    if(typeof saved.meta.op === "string") state.meta.op = saved.meta.op.slice(0,80);
+    if(typeof saved.meta.subtitle === "string") state.meta.subtitle = saved.meta.subtitle.slice(0,240);
+    if(typeof saved.meta.phase === "string") state.meta.phase = saved.meta.phase;
+    if(saved.meta.desc) CATS.forEach(c=>{ if(typeof saved.meta.desc[c.id] === "string") state.meta.desc[c.id] = saved.meta.desc[c.id].slice(0,140); });
+  }
+  if(saved.custom) CATS.forEach(c=>{
+    (saved.custom[c.id]||[]).forEach(cr=>{
+      if(!cr || !cr.id) return;
+      state.custom[c.id].push({ id:cr.id, unit:String(cr.unit||"").slice(0,40), sys:String(cr.sys||"").slice(0,60), ob:(cr.ob==null?null:clamp(cr.ob,0,999)) });
+      state.rows[cr.id] = saved.rows && saved.rows[cr.id]
+        ? { start:clamp(saved.rows[cr.id].start,0,999), conf:clamp(saved.rows[cr.id].conf,0,999), prob:clamp(saved.rows[cr.id].prob,0,999) }
+        : { start:0, conf:0, prob:0 };
+      const n = parseInt(String(cr.id).replace("cx",""),10);
+      if(!isNaN(n) && n >= customSeq) customSeq = n + 1;
+    });
+  });
+  return true;
+}
+
+async function loadState(){
+  state = defaults();
+  let saved = null;
+  try{ const res = await Store.get(KEY); if(res && res.value) saved = JSON.parse(res.value); }catch(e){ saved = null; }
+  mergeSaved(saved);
+}
+let saveTimer=null;
+function saveState(){
+  setSaveMsg("Saving\u2026");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const okZ = await Store.set(KEY, JSON.stringify(state));
+    setSaveMsg((okZ && Store.mode !== "memory") ? "Saved" : "Session only");
+  }, 350);
+}
+function setSaveMsg(t){ document.getElementById("savestate").textContent = t; }
+
+// ---------------- math ----------------
+function clamp(v,min,max){ v = parseInt(v,10); if(isNaN(v)) v = 0; return Math.max(min,Math.min(max,v)); }
+function allRows(c){ return c.rows.filter(r=>!state.deleted.includes(r.id)).concat(state.custom[c.id]); }
+function rowCalc(id){
+  const s = state.rows[id];
+  const conf = Math.min(s.conf, s.start);
+  const rem  = Math.max(0, s.start - conf);
+  const pct  = s.start > 0 ? Math.round(rem / s.start * 100) : null;
+  return { conf, rem, pct };
+}
+function catCalc(c){
+  let start=0, rem=0, projRem=0;
+  allRows(c).forEach(r=>{
+    const s = state.rows[r.id];
+    if(!s || s.start<=0) return;             // rows w/ no confirmed qty don't count
+    const rc = rowCalc(r.id);
+    start += s.start; rem += rc.rem;
+    projRem += Math.max(0, s.start - rc.conf - Math.min(s.prob, s.start - rc.conf));
+  });
+  return {
+    start, rem,
+    pct:  start>0 ? Math.round(rem/start*100) : null,
+    proj: start>0 ? Math.round(projRem/start*100) : null,
+  };
+}
+function overallCalc(){
+  let start=0, rem=0;
+  CATS.forEach(c=>{ const cc = catCalc(c); start += cc.start; rem += cc.rem; });
+  return start>0 ? Math.round(rem/start*100) : 100;
+}
+function rag(pct){ return pct==null ? "n" : pct>=70 ? "g" : pct>=30 ? "a" : "r"; }
+function ragColor(pct){ return {g:"var(--green-dk)",a:"var(--amber)",r:"var(--red)",n:"var(--panel-alt)"}[rag(pct)]; }
+function chipText(pct){
+  if(pct==null) return "NOT ASSESSED";
+  if(pct>=70) return "ACTIVE THREAT";
+  if(pct>=30) return "DEGRADED";
+  return "NEUTRALIZED";
+}
+
+// ---------------- render ----------------
+function esc(t){ return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); }
+
+function rowHtml(r, isCustom, catId){
+  const ob = isCustom ? r.ob : OB_INDEX[r.id];
+  const obCell = isCustom
+    ? '<input class="obval" type="number" min="0" max="999" inputmode="numeric" data-obrow="'+r.id+'" aria-label="Order of battle projected quantity" placeholder="\u2013">'
+    : (ob==null ? 'TBR' : ob);
+  const unitCell = isCustom
+    ? '<input class="txt" data-unitrow="'+r.id+'" value="'+esc(r.unit)+'" placeholder="UNIT" aria-label="Unit name">'
+    : esc(r.unit) + (ob==null ? '<span class="tbr-flag">TBR</span>' : '');
+  const sysCell = isCustom
+    ? '<input class="txt" data-sysrow="'+r.id+'" value="'+esc(r.sys)+'" placeholder="System / nomenclature" aria-label="System name">'
+    : esc(r.sys);
+  const startCls = "start" + (ob==null && !isCustom ? " tbr" : "");
+  return '<tr>'
+    + '<td class="unit">'+unitCell+'</td>'
+    + '<td class="sys">'+sysCell+'</td>'
+    + '<td class="ob">'+obCell+'</td>'
+    + '<td class="num"><input class="'+startCls+'" type="number" min="0" max="999" inputmode="numeric" data-row="'+r.id+'" aria-label="Confirmed start quantity"></td>'
+    + '<td><span class="step conf"><button type="button" data-act="dec" data-f="conf" data-row="'+r.id+'" aria-label="decrease confirmed kills">\u2212</button>'
+    +   '<span class="val" data-conf="'+r.id+'">0</span>'
+    +   '<button type="button" data-act="inc" data-f="conf" data-row="'+r.id+'" aria-label="increase confirmed kills">+</button></span></td>'
+    + '<td><span class="step prob"><button type="button" data-act="dec" data-f="prob" data-row="'+r.id+'" aria-label="decrease probable kills">\u2212</button>'
+    +   '<span class="val" data-prob="'+r.id+'">0</span>'
+    +   '<button type="button" data-act="inc" data-f="prob" data-row="'+r.id+'" aria-label="increase probable kills">+</button></span></td>'
+    + '<td class="num" data-rem="'+r.id+'">\u2013</td>'
+    + '<td><span class="pill pn" data-pct="'+r.id+'">TBR</span></td>'
+    + '<td><button type="button" class="delrow" data-del="'+r.id+'" data-cat="'+catId+'" aria-label="Remove this row">\u00D7</button></td>'
+    + '</tr>';
+}
+
+function buildSections(){
+  const host = document.getElementById("sections");
+  host.innerHTML = "";
+  CATS.forEach(c=>{
+    const sec = document.createElement("section");
+    sec.className = "cat"; sec.id = "cat-"+c.id;
+    let rowsHtml = "";
+    c.rows.forEach(r=>{ if(!state.deleted.includes(r.id)) rowsHtml += rowHtml(r,false,c.id); });
+    state.custom[c.id].forEach(r=>{ r.catId = c.id; rowsHtml += rowHtml(r,true,c.id); });
+    sec.innerHTML =
+      '<div class="cat-head">'
+      + '<div class="left"><span class="pri-badge">P'+c.pri+'</span>'
+      + '<button type="button" class="addrow" data-add="'+c.id+'" title="Add unit to '+esc(c.name)+'" aria-label="Add unit to '+esc(c.name)+'">+</button>'
+      + '<div><h2>'+esc(c.name)+'</h2><div class="desc editable" contenteditable="true" spellcheck="false" data-edit="desc:'+c.id+'">'+esc(state.meta.desc[c.id])+'</div></div></div>'
+      + '<span class="cat-pct pn" data-catpct="'+c.id+'">\u2013</span>'
+      + '</div>'
+      + '<table><thead><tr><th>UNIT</th><th>SYSTEM</th>'
+      + '<th><span class="c-ob">OB PROJ</span></th><th>START</th>'
+      + '<th><span class="c-conf">CONF</span></th><th><span class="c-prob">PROB</span></th>'
+      + '<th><span class="c-rem">REM</span></th><th>% CBT PWR</th><th></th></tr></thead>'
+      + '<tbody>'+rowsHtml+'</tbody></table>';
+    host.appendChild(sec);
+  });
+
+  // gauges
+  const g = document.getElementById("gauges");
+  g.innerHTML = CATS.map(c=>
+    '<div class="gauge"><div class="g-head"><span><span class="g-pri">P'+c.pri+'</span> <span class="g-name">'+esc(c.name)+'</span></span>'
+    + '<span class="g-pct" data-gpct="'+c.id+'">\u2013</span></div>'
+    + '<div class="bar"><i data-gbar="'+c.id+'" style="width:100%"></i></div>'
+    + '<span class="g-chip" data-gchip="'+c.id+'">\u2013</span>'
+    + '<span style="float:right;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px" data-gproj="'+c.id+'"></span></div>'
+  ).join("");
+}
+
+function refresh(){
+  CATS.forEach(c=>allRows(c).forEach(r=>{
+    const s = state.rows[r.id]; if(!s) return;
+    const rc = rowCalc(r.id);
+    const inp = document.querySelector('input.start[data-row="'+r.id+'"]');
+    if(inp){
+      if(document.activeElement !== inp) inp.value = s.start || "";
+      const ob = state.custom[c.id].includes(r) ? r.ob : OB_INDEX[r.id];
+      inp.classList.toggle("mismatch", ob!=null && s.start !== ob);
+    }
+    const obInp = document.querySelector('input.obval[data-obrow="'+r.id+'"]');
+    if(obInp && document.activeElement !== obInp) obInp.value = (r.ob==null?"":r.ob);
+    document.querySelector('[data-conf="'+r.id+'"]').textContent = s.conf;
+    document.querySelector('[data-prob="'+r.id+'"]').textContent = s.prob;
+    document.querySelector('[data-rem="'+r.id+'"]').textContent = s.start>0 ? rc.rem : "\u2013";
+    const pill = document.querySelector('[data-pct="'+r.id+'"]');
+    pill.className = "pill p"+rag(rc.pct);
+    pill.textContent = rc.pct==null ? "TBR" : rc.pct+"%";
+  }));
+  CATS.forEach(c=>{
+    const cc = catCalc(c);
+    const cp = document.querySelector('[data-catpct="'+c.id+'"]');
+    cp.style.background = ragColor(cc.pct);
+    cp.style.color = cc.pct==null ? "var(--muted)" : "#fff";
+    cp.textContent = cc.pct==null ? "TBR" : cc.pct+"% CBT PWR";
+    document.querySelector('[data-gpct="'+c.id+'"]').textContent = cc.pct==null ? "\u2013" : cc.pct+"%";
+    const bar = document.querySelector('[data-gbar="'+c.id+'"]');
+    bar.style.width = (cc.pct==null?0:cc.pct)+"%";
+    bar.style.backgroundColor = ragColor(cc.pct);
+    document.querySelector('[data-gchip="'+c.id+'"]').textContent = chipText(cc.pct);
+    const proj = document.querySelector('[data-gproj="'+c.id+'"]');
+    proj.textContent = (cc.pct!=null && cc.proj!=null && cc.proj!==cc.pct) ? "w/ PROB: "+cc.proj+"%" : "";
+  });
+  const o = overallCalc();
+  const on = document.getElementById("overallPct");
+  on.textContent = o+"%";
+  on.style.color = {g:"#4CC372",a:"#E0B33F",r:"#E05A50",n:"var(--ink)"}[rag(o)];
+  const as = document.getElementById("assessment");
+  as.textContent = chipText(o).replace("ACTIVE THREAT","COMBAT EFFECTIVE")
+                              .replace("NEUTRALIZED","COMBAT INEFFECTIVE");
+  as.style.background = ragColor(o);
+}
+
+// ---------------- in-page confirm (native confirm() is blocked in sandboxed iframes) ----------------
+function confirmDialog(message, confirmLabel){
+  return new Promise(resolve=>{
+    const ov  = document.getElementById("confirmOverlay");
+    const yes = document.getElementById("confirmYes");
+    const no  = document.getElementById("confirmNo");
+    document.getElementById("confirmMsg").textContent = message;
+    yes.textContent = confirmLabel || "Confirm";
+    ov.style.display = "flex";
+    yes.focus();
+    function cleanup(v){
+      ov.style.display = "none";
+      yes.removeEventListener("click", onYes);
+      no.removeEventListener("click", onNo);
+      document.removeEventListener("keydown", onKey);
+      resolve(v);
+    }
+    function onYes(){ cleanup(true); }
+    function onNo(){ cleanup(false); }
+    function onKey(ev){
+      if(ev.key === "Escape") onNo();
+      else if(ev.key === "Enter"){ ev.preventDefault(); onYes(); }
+    }
+    yes.addEventListener("click", onYes);
+    no.addEventListener("click", onNo);
+    document.addEventListener("keydown", onKey);
+  });
+}
+// single-button info popup (reuses the confirm overlay)
+function notify(message){
+  return new Promise(resolve=>{
+    const ov = document.getElementById("confirmOverlay");
+    const yes = document.getElementById("confirmYes");
+    const no  = document.getElementById("confirmNo");
+    document.getElementById("confirmMsg").textContent = message;
+    yes.textContent = "OK"; no.style.display = "none";
+    ov.style.display = "flex"; yes.focus();
+    function done(){
+      ov.style.display = "none"; no.style.display = "";
+      yes.removeEventListener("click", done);
+      document.removeEventListener("keydown", onKey);
+      resolve();
+    }
+    function onKey(ev){ if(ev.key === "Escape" || ev.key === "Enter"){ ev.preventDefault(); done(); } }
+    yes.addEventListener("click", done);
+    document.addEventListener("keydown", onKey);
+  });
+}
+
+// ---------------- events ----------------
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("button[data-act]");
+  if(b){
+    const {act,f,row} = b.dataset;
+    const s = state.rows[row];
+    s[f] = clamp(s[f] + (act==="inc" ? 1 : -1), 0, 999);
+    if(s.conf > s.start) s.conf = s.start;
+    if(s.prob > Math.max(0, s.start - s.conf)) s.prob = Math.max(0, s.start - s.conf);
+    refresh(); saveState();
+    return;
+  }
+  const add = e.target.closest("button[data-add]");
+  if(add){
+    const catId = add.dataset.add;
+    const id = "cx" + (customSeq++);
+    state.custom[catId].push({ id, unit:"", sys:"", ob:null, catId });
+    state.rows[id] = { start:0, conf:0, prob:0 };
+    buildSections(); refresh(); saveState();
+    const u = document.querySelector('input[data-unitrow="'+id+'"]');
+    if(u) u.focus();
+    return;
+  }
+  const del = e.target.closest("button[data-del]");
+  if(del){
+    const id = del.dataset.del, catId = del.dataset.cat;
+    const isCustom = !!(state.custom[catId] && state.custom[catId].some(r=>r.id===id));
+    if(!(await confirmDialog("Remove this row from the board?", "Remove"))) return;
+    if(isCustom){
+      state.custom[catId] = state.custom[catId].filter(r=>r.id!==id);   // added row: drop entirely
+    } else if(!state.deleted.includes(id)){
+      state.deleted.push(id);                                           // pre-built row: mark removed (Reset restores it)
+    }
+    delete state.rows[id];
+    buildSections(); refresh(); saveState();
+  }
+});
+document.addEventListener("input", e=>{
+  const t = e.target;
+  if(t.matches("input.start")){
+    const s = state.rows[t.dataset.row];
+    s.start = clamp(t.value, 0, 999);
+    if(s.conf > s.start) s.conf = s.start;
+    if(s.prob > Math.max(0, s.start - s.conf)) s.prob = Math.max(0, s.start - s.conf);
+    refresh(); saveState();
+  } else if(t.matches("input.obval")){
+    const id = t.dataset.obrow;
+    CATS.forEach(c=>state.custom[c.id].forEach(r=>{ if(r.id===id) r.ob = t.value==="" ? null : clamp(t.value,0,999); }));
+    refresh(); saveState();
+  } else if(t.matches("input[data-unitrow]")){
+    const id = t.dataset.unitrow;
+    CATS.forEach(c=>state.custom[c.id].forEach(r=>{ if(r.id===id) r.unit = t.value.slice(0,40); }));
+    saveState();
+  } else if(t.matches("input[data-sysrow]")){
+    const id = t.dataset.sysrow;
+    CATS.forEach(c=>state.custom[c.id].forEach(r=>{ if(r.id===id) r.sys = t.value.slice(0,60); }));
+    saveState();
+  } else if(t.matches("[data-edit]")){
+    const key = t.dataset.edit, val = t.textContent;
+    if(key === "op") state.meta.op = val.slice(0,80);
+    else if(key === "subtitle") state.meta.subtitle = val.slice(0,240);
+    else if(key.indexOf("desc:") === 0) state.meta.desc[key.slice(5)] = val.slice(0,140);
+    saveState();
+  }
+});
+document.getElementById("resetBtn").addEventListener("click", async ()=>{
+  if(!(await confirmDialog("Reset all counts to the order-of-battle baseline, restore removed rows, and delete added units?", "Reset board"))) return;
+  state = defaults(); buildSections(); refresh(); saveState();
+});
+document.getElementById("sitrepBtn").addEventListener("click", async ()=>{
+  const dt = new Date();
+  const dtg = String(dt.getDate()).padStart(2,"0") + String(dt.getHours()).padStart(2,"0")
+            + String(dt.getMinutes()).padStart(2,"0") + "S " +
+            ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][dt.getMonth()] + " " + String(dt.getFullYear()).slice(2);
+  let out = "UNCLASSIFIED // EXERCISE USE ONLY\n";
+  out += (state.meta.op || "OPERATION").toUpperCase() + " - " + (state.meta.phase || "").toUpperCase() + " - ENEMY BDA ROLLUP - " + dtg + "\n";
+  out += "OVERALL ASSESSED EN COMBAT POWER: " + overallCalc() + "%\n";
+  CATS.forEach(c=>{
+    const cc = catCalc(c);
+    out += "P" + c.pri + " " + c.name + ": " + (cc.pct==null ? "NOT ASSESSED" : cc.pct+"% (" + cc.rem + "/" + cc.start + " REM)") + " - " + chipText(cc.pct) + "\n";
+    allRows(c).forEach(r=>{
+      const s = state.rows[r.id]; if(!s || (s.start<=0 && s.conf<=0 && s.prob<=0)) return;
+      const rc = rowCalc(r.id);
+      const ob = state.custom[c.id].includes(r) ? r.ob : OB_INDEX[r.id];
+      out += "  " + (r.unit||"UNIT") + " (" + (r.sys||"system") + "): OB " + (ob==null?"TBR":ob)
+           + " / START " + s.start + " / CONF " + s.conf + " / PROB " + s.prob + " / REM " + rc.rem + "\n";
+    });
+  });
+  out += "UNCLASSIFIED // EXERCISE USE ONLY";
+  const box = document.getElementById("sitrepBox");
+  box.value = out; box.style.display = "block";
+  try{ await navigator.clipboard.writeText(out); setSaveMsg("Copied"); }
+  catch(e){ box.select(); setSaveMsg("Select & copy"); }
+});
+
+// ---- Export: download the whole board as a .json backup ----
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  try{
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const opName = ((state.meta.op || "board").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_+|_+$/g,"")) || "board";
+    const d = new Date();
+    const stamp = d.getFullYear() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0")
+                + "_" + String(d.getHours()).padStart(2,"0") + String(d.getMinutes()).padStart(2,"0");
+    a.href = url; a.download = opName + "_killboard_" + stamp + ".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+    setSaveMsg("Exported");
+  }catch(e){ notify("Couldn't export the board file in this browser."); }
+});
+
+// ---- Import: load a previously exported .json (replaces current board) ----
+document.getElementById("importBtn").addEventListener("click", ()=>{
+  document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change", async (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if(!file){ return; }
+  const proceed = await confirmDialog("Import this file? It replaces the current board — Export first if you want a backup.", "Import");
+  if(!proceed){ e.target.value = ""; return; }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const saved = JSON.parse(reader.result);
+      if(!saved || typeof saved !== "object" || (!saved.rows && !saved.meta && !saved.custom)) throw new Error("shape");
+      customSeq = 1;
+      state = defaults();
+      mergeSaved(saved);
+      buildSections(); refresh(); applyMeta(); saveState();
+      setSaveMsg("Imported");
+    }catch(err){
+      setSaveMsg("");
+      notify("That file couldn't be read as a kill-board export. Use a .json file that was exported from this board.");
+    }
+    e.target.value = "";
+  };
+  reader.onerror = ()=>{ e.target.value = ""; notify("Couldn't read that file."); };
+  reader.readAsText(file);
+});
+
+// ---------------- editable header + phase ----------------
+function applyMeta(){
+  const op = document.querySelector('[data-edit="op"]');
+  if(op && document.activeElement !== op) op.textContent = state.meta.op;
+  const sub = document.querySelector('[data-edit="subtitle"]');
+  if(sub && document.activeElement !== sub) sub.textContent = state.meta.subtitle;
+  const ph = document.getElementById("phaseSelect");
+  if(ph) ph.value = state.meta.phase;
+}
+document.getElementById("phaseSelect").addEventListener("change", e=>{
+  state.meta.phase = e.target.value; saveState();
+});
+// Enter commits an inline edit instead of inserting a newline
+document.addEventListener("keydown", e=>{
+  if(e.target && e.target.matches && e.target.matches("[data-edit]") && e.key === "Enter"){
+    e.preventDefault(); e.target.blur();
+  }
+});
+
+// ---------------- init ----------------
+state = defaults();
+buildSections();
+applyMeta();
+loadState().then(()=>{ buildSections(); refresh(); applyMeta(); setSaveMsg(""); });
+</script>
+</body>
+</html>
